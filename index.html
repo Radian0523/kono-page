@@ -94,14 +94,15 @@
   .x-share svg { width: 16px; height: 16px; fill: currentColor; }
 
   .ans { padding: 24px 0; border-top: 1px solid var(--line); }
-  .ans img { width: 100%; display: block; border: 1px solid var(--line); margin: 12px 0; }
+  .ans img { width: 100%; height: auto; display: block; border: 1px solid var(--line); margin: 12px 0; }
   .ans .head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; }
   .ans .head b { font-size: 18px; }
   .tag { font-size: 13px; font-weight: 700; padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; }
   .tag.hit { color: var(--ok); }
   .tag.miss { color: var(--red); }
   .truth { font-weight: 700; }
-  .closing { margin-top: 48px; color: var(--sub); text-align: center; }
+  .closing { margin: 48px 0 0; color: var(--sub); text-align: center; }
+  .lap { padding-bottom: 72px; }
 
   @media (max-width: 560px) {
     main { padding-top: 32px; }
@@ -138,17 +139,19 @@
   <!-- 3. 結果 -->
   <section id="result" aria-labelledby="result-title">
     <h1 id="result-title" class="sr-only" hidden>結果</h1>
-    <div class="score">
-      <div class="big" id="scoreText"></div>
-      <p class="msg" id="scoreMsg"></p>
-      <a class="btn x-share" id="share" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        結果をポストする
-      </a>
+    <div class="lap" id="lap1">
+      <div class="score">
+        <div class="big" data-score></div>
+        <p class="msg" data-msg></p>
+        <a class="btn x-share" data-share target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          結果をポストする
+        </a>
+      </div>
+      <h2>答え</h2>
+      <div data-answers></div>
+      <p class="closing" data-closing>答え合わせは以上です。<br>このページには、異変はありませんでしたか。</p>
     </div>
-    <h2 id="answersTitle">答え</h2>
-    <div id="answers"></div>
-    <p class="closing" id="closing">答え合わせは以上です。<br>このページには、異変はありませんでしたか。</p>
   </section>
 
 </main>
@@ -206,15 +209,28 @@
     qWrap.append(row);
   });
 
+  // 1周分（点数・答え・最後の一文）の中身を入れる。lap は下から数えて何周目か
+  let score = 0;
+  function shareHref(lap) {
+    const text = `『このページの異変を見つけてください🙏』、${ITEMS.length}枚中${score}枚の異変を見抜いた。`
+      + (lap > 1 ? `\nこのページを${lap}周した。` : "") + "\n#GC甲子園2026";
+    return "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(WORK_URL);
+  }
+  function lapMessage(lap) {
+    if (lap === 1) return MESSAGES[score];
+    return LAP_MESSAGES[lap - 2] || `このページを、${lap}回見ています。`;
+  }
+  function fillLap(el, lap) {
+    el.dataset.lap = lap;
+    el.querySelector("[data-score]").innerHTML = `${ITEMS.length}枚中 ${score}<small>枚 正解</small>`;
+    el.querySelector("[data-msg]").textContent = lapMessage(lap);
+    el.querySelector("[data-share]").href = shareHref(lap);
+  }
+
   $("submit").addEventListener("click", () => {
-    const score = ITEMS.reduce((n, item, i) => n + (item.anomaly === answers[i] ? 1 : 0), 0);
-    $("scoreText").innerHTML = `${ITEMS.length}枚中 ${score}<small>枚 正解</small>`;
-    $("scoreMsg").textContent = MESSAGES[score];
-
-    const shareText = `『このページの異変を見つけてください🙏』、${ITEMS.length}枚中${score}枚の異変を見抜いた。\n#GC甲子園2026`;
-    $("share").href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(shareText) + "&url=" + encodeURIComponent(WORK_URL);
-
-    const aWrap = $("answers");
+    score = ITEMS.reduce((n, item, i) => n + (item.anomaly === answers[i] ? 1 : 0), 0);
+    const lap1 = $("lap1");
+    const aWrap = lap1.querySelector("[data-answers]");
     aWrap.innerHTML = "";
     ITEMS.forEach((item, i) => {
       const hit = item.anomaly === answers[i];
@@ -226,54 +242,70 @@
           <span class="truth">${item.anomaly ? "異変あり" : "異変なし"}</span>
           <span class="tag ${hit ? "hit" : "miss"}">${hit ? "正解" : "不正解"}（あなた：${answers[i] ? "異変あり" : "異変なし"}）</span>
         </div>
-        <img src="img/a${i + 1}.jpg" alt="画像${i + 1}の答え" loading="lazy">
+        <img src="img/a${i + 1}.jpg" alt="画像${i + 1}の答え" width="1272" height="715" loading="lazy">
         <p>${item.text}</p>`;
       aWrap.append(el);
     });
+    fillLap(lap1, 1);
     show("result");
     armLastAnomaly();
   });
 
   // 最後の異変
-  //   最後の一文まで読んで上に戻ると、上がない。答えの列と最後の一文が、何度もくり返し出てくる。
-  //   2周してやっと点数まで戻ると、アドレスバーとタブの名前が書き換わっている。
-  const LOOPS = 2;
-  const HASH = "#もしかして、ここも見てました？";
-  const TITLE_AFTER = "……ここも、見てましたよね？";
+  //   最後の一文まで読んで上に戻ると、上がない。点数・答え・最後の一文が、上へ上へと終わりなくくり返す。
+  //   1周目の終わりが見えた瞬間に、アドレスバーとタブの名前が書き換わる。
+  const LAP_MESSAGES = [
+    "あれ、さっきも見ましたよね。",
+    "このページは、まだ終わりません。",
+    "上に戻っても、このページです。",
+    "まだ、見てますよね？",
+  ];
+  const HASH = "#あれ、ループしてる？";
   if (location.hash) history.replaceState(null, "", location.pathname + location.search);
 
   function armLastAnomaly() {
-    let looped = false, marked = false;
-    const scoreBox = document.querySelector(".score");
+    const lap1 = $("lap1");
+    let top = lap1, armed = false, marked = false, shownLap = 1;
+    const inView = (el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; };
 
-    // 最後の一文が見えて、点数が画面の外にあるうちに、見えない上側へ同じ答えの列を差し込む
-    new IntersectionObserver((entries, obs) => {
-      if (looped || !entries[0].isIntersecting) return;
-      if (scoreBox.getBoundingClientRect().bottom > 0) return;
-      looped = true;
-      obs.disconnect();
+    // いちばん上の周の、さらに上に1周足す（見ている位置は動かさない）
+    function addLapAbove() {
+      const el = lap1.cloneNode(true);
+      el.removeAttribute("id");
+      el.querySelectorAll("img").forEach((img) => img.removeAttribute("loading"));
+      fillLap(el, Number(top.dataset.lap) + 1);
       const before = document.documentElement.scrollHeight;
-      const frag = document.createDocumentFragment();
-      for (let n = 0; n < LOOPS; n++) {
-        const a = $("answers").cloneNode(true);
-        a.removeAttribute("id");
-        a.querySelectorAll("img").forEach((img) => img.removeAttribute("loading"));
-        const c = $("closing").cloneNode(true);
-        c.removeAttribute("id");
-        frag.append(a, c);
-      }
-      $("answersTitle").after(frag);
-      window.scrollBy(0, document.documentElement.scrollHeight - before);   // 見ている位置は動かさない
-    }).observe($("closing"));
+      top.before(el);
+      window.scrollBy(0, document.documentElement.scrollHeight - before);
+      top = el;
+    }
 
-    // ループを抜けて点数まで戻ってきたら、ページの外を書き換える
-    new IntersectionObserver((entries, obs) => {
-      if (!looped || marked || !entries[0].isIntersecting) return;
-      marked = true;
-      obs.disconnect();
-      history.replaceState(null, "", location.pathname + location.search + HASH);
-      document.title = TITLE_AFTER;
-    }).observe(scoreBox);
+    function check() {
+      // 1周目の最後の一文が見えて、点数が画面の外にあるうちに仕掛ける
+      if (!armed) {
+        if (inView(lap1.querySelector("[data-closing]")) && lap1.querySelector(".score").getBoundingClientRect().bottom < 0) {
+          armed = true;
+          addLapAbove();
+        }
+        return;
+      }
+      // 上に近づいたら、さらに1周足す。これで上は終わらない
+      if (window.scrollY < window.innerHeight * 2) addLapAbove();
+      // 2周目より上の「最後の一文」か点数が見えたら、アドレスバーとタブの名前を書き換える
+      for (const el of document.querySelectorAll(".lap")) {
+        const lap = Number(el.dataset.lap);
+        if (lap < 2 || lap <= shownLap) continue;
+        if (inView(el.querySelector("[data-closing]")) || inView(el.querySelector(".score"))) {
+          shownLap = lap;
+          document.title = `このページを${lap}周しています`;
+          if (!marked) {
+            marked = true;
+            history.replaceState(null, "", location.pathname + location.search + HASH);
+          }
+        }
+      }
+    }
+    window.addEventListener("scroll", check, { passive: true });
   }
 </script>
 </body>

@@ -20,7 +20,7 @@
     --ok: #1f8a4c;
   }
   * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
+  html { -webkit-text-size-adjust: 100%; overflow-anchor: none; }
   body {
     margin: 0;
     background: var(--bg);
@@ -146,9 +146,9 @@
         結果をポストする
       </a>
     </div>
-    <h2>答え</h2>
+    <h2 id="answersTitle">答え</h2>
     <div id="answers"></div>
-    <p class="closing">答え合わせは以上です。<br>このページには、異変はありませんでしたか。</p>
+    <p class="closing" id="closing">答え合わせは以上です。<br>このページには、異変はありませんでしたか。</p>
   </section>
 
 </main>
@@ -231,7 +231,50 @@
       aWrap.append(el);
     });
     show("result");
+    armLastAnomaly();
   });
+
+  // 最後の異変
+  //   最後の一文まで読んで上に戻ると、上がない。答えの列と最後の一文が、何度もくり返し出てくる。
+  //   2周してやっと点数まで戻ると、アドレスバーとタブの名前が書き換わっている。
+  const LOOPS = 2;
+  const HASH = "#もしかして、ここも見てました？";
+  const TITLE_AFTER = "……ここも、見てましたよね？";
+  if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+
+  function armLastAnomaly() {
+    let looped = false, marked = false;
+    const scoreBox = document.querySelector(".score");
+
+    // 最後の一文が見えて、点数が画面の外にあるうちに、見えない上側へ同じ答えの列を差し込む
+    new IntersectionObserver((entries, obs) => {
+      if (looped || !entries[0].isIntersecting) return;
+      if (scoreBox.getBoundingClientRect().bottom > 0) return;
+      looped = true;
+      obs.disconnect();
+      const before = document.documentElement.scrollHeight;
+      const frag = document.createDocumentFragment();
+      for (let n = 0; n < LOOPS; n++) {
+        const a = $("answers").cloneNode(true);
+        a.removeAttribute("id");
+        a.querySelectorAll("img").forEach((img) => img.removeAttribute("loading"));
+        const c = $("closing").cloneNode(true);
+        c.removeAttribute("id");
+        frag.append(a, c);
+      }
+      $("answersTitle").after(frag);
+      window.scrollBy(0, document.documentElement.scrollHeight - before);   // 見ている位置は動かさない
+    }).observe($("closing"));
+
+    // ループを抜けて点数まで戻ってきたら、ページの外を書き換える
+    new IntersectionObserver((entries, obs) => {
+      if (!looped || marked || !entries[0].isIntersecting) return;
+      marked = true;
+      obs.disconnect();
+      history.replaceState(null, "", location.pathname + location.search + HASH);
+      document.title = TITLE_AFTER;
+    }).observe(scoreBox);
+  }
 </script>
 </body>
 </html>

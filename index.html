@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>このページ ― 答え合わせ</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+1p:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #222;
+    --sub: #6b6b6b;
+    --line: #e4e4e4;
+    --bg: #fff;
+    --panel: #f4f4f4;
+    --pink: #e6336f;
+    --red: #e21e3c;
+    --ok: #1f8a4c;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "M PLUS 1p", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    line-height: 1.75;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 16px 96px; }
+  h1 { font-size: 28px; font-weight: 800; margin: 0 0 8px; letter-spacing: .02em; }
+  h2 { font-size: 20px; font-weight: 800; margin: 0 0 16px; }
+  p { margin: 0 0 16px; }
+  .sub { color: var(--sub); font-size: 14px; }
+  a { color: var(--pink); }
+  button { font: inherit; cursor: pointer; }
+
+  .btn {
+    display: inline-block;
+    border: 2px solid var(--pink);
+    background: #fff;
+    color: var(--pink);
+    font-weight: 800;
+    padding: 12px 28px;
+    border-radius: 2px;
+    text-decoration: none;
+  }
+  .btn.primary { background: var(--pink); color: #fff; }
+  .btn:disabled { border-color: var(--line); color: #bbb; background: #fafafa; cursor: default; }
+
+  section { display: none; }
+  section.on { display: block; }
+
+  /* gate */
+  #gate { padding-top: 12vh; }
+  #gate .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+
+  /* questions */
+  .q {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 0;
+    border-top: 1px solid var(--line);
+  }
+  .q:last-of-type { border-bottom: 1px solid var(--line); }
+  .q img { width: 100%; display: block; border: 1px solid var(--line); }
+  .q .label { font-weight: 800; margin-bottom: 8px; }
+  .choice { display: flex; gap: 8px; flex-wrap: wrap; }
+  .choice button {
+    border: 2px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    padding: 8px 18px;
+    font-weight: 700;
+    border-radius: 2px;
+  }
+  .choice button[aria-pressed="true"] { border-color: var(--pink); background: var(--pink); color: #fff; }
+  #submitRow { margin-top: 32px; text-align: center; }
+
+  /* result */
+  .score {
+    text-align: center;
+    padding: 32px 16px;
+    background: var(--panel);
+    margin-bottom: 32px;
+  }
+  .score .big { font-size: 56px; font-weight: 800; line-height: 1.2; }
+  .score .big small { font-size: 22px; font-weight: 700; }
+  .score .msg { margin: 8px 0 24px; }
+  .x-share { display: inline-flex; align-items: center; gap: 8px; background: #000; border-color: #000; color: #fff; }
+  .x-share svg { width: 16px; height: 16px; fill: currentColor; }
+
+  .ans { padding: 24px 0; border-top: 1px solid var(--line); }
+  .ans img { width: 100%; display: block; border: 1px solid var(--line); margin: 12px 0; }
+  .ans .head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; }
+  .ans .head b { font-size: 18px; }
+  .tag { font-size: 13px; font-weight: 700; padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; }
+  .tag.hit { color: var(--ok); }
+  .tag.miss { color: var(--red); }
+  .truth { font-weight: 700; }
+  .closing { margin-top: 48px; color: var(--sub); text-align: center; }
+
+  @media (max-width: 560px) {
+    main { padding-top: 32px; }
+    h1 { font-size: 24px; }
+    .q { grid-template-columns: 1fr; }
+    .score .big { font-size: 44px; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- 1. 入口：ネタばらし防止 -->
+  <section id="gate" class="on" aria-labelledby="gate-title">
+    <h1 id="gate-title">答え合わせ</h1>
+    <p>ここから先には、答えがあります。</p>
+    <p>まだ5枚すべてを判断していないなら、作品ページに戻ってください。</p>
+    <div class="actions">
+      <a class="btn" id="backLink" href="#">作品ページに戻る</a>
+      <button class="btn primary" id="toQuiz" type="button">判断した。答え合わせをする</button>
+    </div>
+  </section>
+
+  <!-- 2. 回答 -->
+  <section id="quiz" aria-labelledby="quiz-title">
+    <h1 id="quiz-title">あなたの判断</h1>
+    <p class="sub">作品ページで見た5枚の画像について、異変があったかどうかを選んでください。</p>
+    <div id="questions"></div>
+    <div id="submitRow">
+      <button class="btn primary" id="submit" type="button" disabled>答え合わせ</button>
+    </div>
+  </section>
+
+  <!-- 3. 結果 -->
+  <section id="result" aria-labelledby="result-title">
+    <h1 id="result-title" class="sr-only" hidden>結果</h1>
+    <div class="score">
+      <div class="big" id="scoreText"></div>
+      <p class="msg" id="scoreMsg"></p>
+      <a class="btn x-share" id="share" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        結果をポストする
+      </a>
+    </div>
+    <h2>答え</h2>
+    <div id="answers"></div>
+    <p class="closing">答え合わせは以上です。<br>このページには、異変はありませんでしたか。</p>
+  </section>
+
+</main>
+<script>
+  // 公開後に自分の作品ページのURLへ差し替える
+  const WORK_URL = "https://gameparade.creators-guild.com/works/";
+
+  const ITEMS = [
+    { anomaly: false, text: "異変はありません。まわりのページと同じです。" },
+    { anomaly: true,  text: "左のカテゴリに「このページ」という項目が増えて、選ばれています。本物のページには、この項目はありません。" },
+    { anomaly: false, text: "異変はありません。2枚目を見たあとで、ここを疑った人も多いはずです。" },
+    { anomaly: true,  text: "ページ全体が左右反転しています。カテゴリは右に移り、画像と説明文も入れ替わっています。" },
+    { anomaly: true,  text: "画像の中のページが、1段ごとに回転しながら奥へ沈んでいます。" },
+  ];
+  const MESSAGES = {
+    5: "すべて見抜きました。このページは、あなたのことを覚えました。",
+    4: "あと1枚。どれを見落としたか、下で確かめてください。",
+    3: "半分は見抜けています。",
+    2: "このページは、まだあなたを帰すつもりはありません。",
+    1: "ほとんど気づかれませんでした。",
+    0: "あなたが見ていたのは、本当にこのページでしたか。",
+  };
+
+  const answers = new Array(ITEMS.length).fill(null);
+  const $ = (id) => document.getElementById(id);
+  const show = (id) => {
+    document.querySelectorAll("section").forEach((s) => s.classList.toggle("on", s.id === id));
+    window.scrollTo(0, 0);
+  };
+
+  $("backLink").href = WORK_URL;
+  $("toQuiz").addEventListener("click", () => show("quiz"));
+
+  // 回答欄を組み立てる
+  const qWrap = $("questions");
+  ITEMS.forEach((item, i) => {
+    const row = document.createElement("div");
+    row.className = "q";
+    row.innerHTML = `
+      <img src="img/q${i + 1}.jpg" alt="画像${i + 1}" loading="lazy">
+      <div>
+        <div class="label">画像${i + 1}</div>
+        <div class="choice" role="group" aria-label="画像${i + 1}の判断">
+          <button type="button" data-v="true" aria-pressed="false">異変あり</button>
+          <button type="button" data-v="false" aria-pressed="false">異変なし</button>
+        </div>
+      </div>`;
+    row.querySelectorAll("button").forEach((b) => {
+      b.addEventListener("click", () => {
+        answers[i] = b.dataset.v === "true";
+        row.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+        $("submit").disabled = answers.some((a) => a === null);
+      });
+    });
+    qWrap.append(row);
+  });
+
+  $("submit").addEventListener("click", () => {
+    const score = ITEMS.reduce((n, item, i) => n + (item.anomaly === answers[i] ? 1 : 0), 0);
+    $("scoreText").innerHTML = `${ITEMS.length}枚中 ${score}<small>枚 正解</small>`;
+    $("scoreMsg").textContent = MESSAGES[score];
+
+    const shareText = `『このページ』の異変、${ITEMS.length}枚中${score}枚見抜いた。\n#GC甲子園2026 #このページ`;
+    $("share").href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(shareText) + "&url=" + encodeURIComponent(WORK_URL);
+
+    const aWrap = $("answers");
+    aWrap.innerHTML = "";
+    ITEMS.forEach((item, i) => {
+      const hit = item.anomaly === answers[i];
+      const el = document.createElement("div");
+      el.className = "ans";
+      el.innerHTML = `
+        <div class="head">
+          <b>画像${i + 1}</b>
+          <span class="truth">${item.anomaly ? "異変あり" : "異変なし"}</span>
+          <span class="tag ${hit ? "hit" : "miss"}">${hit ? "正解" : "不正解"}（あなた：${answers[i] ? "異変あり" : "異変なし"}）</span>
+        </div>
+        <img src="img/a${i + 1}.jpg" alt="画像${i + 1}の答え" loading="lazy">
+        <p>${item.text}</p>`;
+      aWrap.append(el);
+    });
+    show("result");
+  });
+</script>
+</body>
+</html>

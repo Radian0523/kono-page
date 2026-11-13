@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>このページの異変を見つけてください🙏</title>
 <meta name="robots" content="noindex">
+<script data-goatcounter="https://radian0523.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1p:wght@400;700;800&display=swap" rel="stylesheet">
@@ -175,6 +176,16 @@
     0: "異変なんて、最初からなかったのかもしれませんね。",
   };
 
+  // 数えるだけ（誰が来たかは記録しない）。GoatCounter の管理画面に出来事ごとの回数が出る
+  function track(name) {
+    try { window.goatcounter?.count?.({ path: name, title: name, event: true }); } catch (e) {}
+  }
+  document.addEventListener("click", (e) => {
+    const share = e.target.closest("[data-share]");
+    if (share) track(`share-lap-${share.closest(".lap").dataset.lap}`);   // 何周目のボタンからポストしたか
+    if (e.target.closest("#backLink")) track("back-to-work");
+  });
+
   const answers = new Array(ITEMS.length).fill(null);
   const $ = (id) => document.getElementById(id);
   const show = (id) => {
@@ -183,7 +194,7 @@
   };
 
   $("backLink").href = WORK_URL;
-  $("toQuiz").addEventListener("click", () => show("quiz"));
+  $("toQuiz").addEventListener("click", () => { show("quiz"); track("quiz-start"); });
 
   // 回答欄を組み立てる
   const qWrap = $("questions");
@@ -255,6 +266,8 @@
     });
     fillLap(lap1, 1);
     show("result");
+    track("result");
+    track(`score-${score}`);
     armLastAnomaly();
   });
 
@@ -305,8 +318,10 @@
         if (inView(el.querySelector("[data-closing]")) || inView(el.querySelector(".score"))) {
           shownLap = lap;
           document.title = `このページを${lap}周しています`;
+          if (lap <= 30 || lap % 10 === 0) track(`lap-${lap}`);   // 何周目まで行ったか（30周より先は10周ごと）
           if (!marked) {
             marked = true;
+            track("loop");
             history.replaceState(null, "", location.pathname + location.search + HASH);
           }
         }

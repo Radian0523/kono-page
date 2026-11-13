@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>このページの異変を見つけてください🙏 ― 答え合わせ</title>
+<title>このページの異変を見つけてください🙏</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -118,18 +118,18 @@
   <!-- 1. 入口：ネタばらし防止 -->
   <section id="gate" class="on" aria-labelledby="gate-title">
     <h1 id="gate-title">答え合わせ</h1>
-    <p>ここから先には、答えがあります。</p>
-    <p>まだ5枚すべてを判断していないなら、作品ページに戻ってください。</p>
+    <p>ここから先には、5枚の写真の答えがあります。</p>
+    <p>まだ5枚すべてを見比べていないなら、あのページに戻ってください。</p>
     <div class="actions">
-      <a class="btn" id="backLink" href="#">作品ページに戻る</a>
-      <button class="btn primary" id="toQuiz" type="button">判断した。答え合わせをする</button>
+      <a class="btn" id="backLink" href="#">あのページに戻る</a>
+      <button class="btn primary" id="toQuiz" type="button">見比べた。答え合わせをする</button>
     </div>
   </section>
 
   <!-- 2. 回答 -->
   <section id="quiz" aria-labelledby="quiz-title">
-    <h1 id="quiz-title">あなたの判断</h1>
-    <p class="sub">作品ページで見た5枚の画像について、異変があったかどうかを選んでください。</p>
+    <h1 id="quiz-title">あなたが見たもの</h1>
+    <p class="sub">あのページで見た5枚の写真に、異変は写っていましたか。</p>
     <div id="questions"></div>
     <div id="submitRow">
       <button class="btn primary" id="submit" type="button" disabled>答え合わせ</button>
@@ -162,17 +162,17 @@
   const ITEMS = [
     { anomaly: true, text: "写真の中のページへ、画面ごとどこまでも落ち続けています。何段落ちても、その先にあるのはまたこのページです。" },
     { anomaly: true, text: "見ている間に、閲覧数が237から238、239とひとつずつ増え、またひとつずつ237へ戻っていきます。写真なのに。" },
-    { anomaly: true, text: "しばらくすると、ページの部品が次々に剥がれ落ちて、画面の下に積み重なります。そして逆再生のように、元の場所へ戻っていきます。" },
+    { anomaly: true, text: "しばらくすると、ページの部品が次々に剥がれ落ちて、写真の下に積み重なります。そして逆再生のように、元の場所へ戻っていきます。" },
     { anomaly: true, text: "しばらくすると、右の説明文の3行目に文字入力のカーソルが現れ、「なんか一部の写真が変？」が消されて「さっきからずっと見てますよね？」と打ち込まれます。そしてまた消され、何事もなかったように元の文が打ち直されます。" },
-    { anomaly: true, text: "しばらくすると、誰も押していないのに「応援する!!」が「応援済み」になり、応援数が7から8に増えます。少しすると、その応援はそっと取り消されます。" },
+    { anomaly: true, text: "しばらくすると、写真の中で、誰も押していないのに「応援する!!」が「応援済み」になり、応援数が7から8に増えます。少しすると、その応援はそっと取り消されます。" },
   ];
   const MESSAGES = {
-    5: "すべて見抜きました。……このページも、ずっとあなたを見ていました。",
-    4: "あと1枚。このページは、まだ何か隠しています。",
-    3: "半分は見抜けました。残りは、まだ写ったままです。",
-    2: "見抜けたのは2枚だけ。このページは、あなたを帰しません。",
-    1: "ほとんど気づきませんでしたね。",
-    0: "異変なんて、最初からなかったのかもしれません。",
+    5: "すべて見抜きました。多分。",
+    4: "あと1枚。その1枚は、今もあのページで起きています。",
+    3: "見えていたのに、見ていなかったのかもしれません。",
+    2: "このページは、まだあなたを帰すつもりはありません。",
+    1: "気づかなかったのか、気づかないふりをしたのか。",
+    0: "異変なんて、最初からなかったのかもしれませんね。",
   };
 
   const answers = new Array(ITEMS.length).fill(null);
@@ -191,10 +191,10 @@
     const row = document.createElement("div");
     row.className = "q";
     row.innerHTML = `
-      <img src="img/q${i + 1}.jpg" alt="画像${i + 1}">
+      <img src="img/q${i + 1}.jpg" alt="写真${i + 1}">
       <div>
-        <div class="label">画像${i + 1}</div>
-        <div class="choice" role="group" aria-label="画像${i + 1}の判断">
+        <div class="label">写真${i + 1}</div>
+        <div class="choice" role="group" aria-label="写真${i + 1}の判断">
           <button type="button" data-v="true" aria-pressed="false">異変あり</button>
           <button type="button" data-v="false" aria-pressed="false">異変なし</button>
         </div>
@@ -217,12 +217,13 @@
     const tail = lap > 1
       ? `${score > 0 ? "……のに、" : "しかも、"}まだこのページから出られていない。（${lap}周目）`
       : "もう、このページに異変はないはず。";
-    const text = ["このページの異変を見つけてください🙏", result, tail].join("\n")
-      + "\n\n#このページの異変 #GC甲子園2026\n";
-    return "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(WORK_URL);
+    // 作品ページのURLは、ハッシュタグの上に置く
+    const text = ["このページの異変を見つけてください🙏", result, tail, "", WORK_URL, "#GC甲子園"].join("\n");
+    return "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
   }
   function lapMessage(lap) {
     if (lap === 1) return MESSAGES[score];
+    if (lap === 10) return "いつまで見るんですか。";
     return LAP_MESSAGES[lap - 2] || `このページを、${lap}回見ています。`;
   }
   function fillLap(el, lap) {
@@ -244,11 +245,11 @@
       el.className = "ans";
       el.innerHTML = `
         <div class="head">
-          <b>画像${i + 1}</b>
+          <b>写真${i + 1}</b>
           <span class="truth">${item.anomaly ? "異変あり" : "異変なし"}</span>
           <span class="tag ${hit ? "hit" : "miss"}">${hit ? "正解" : "不正解"}（あなた：${answers[i] ? "異変あり" : "異変なし"}）</span>
         </div>
-        <img src="img/a${i + 1}.jpg" alt="画像${i + 1}の答え" width="1272" height="715" loading="lazy">
+        <img src="img/a${i + 1}.jpg" alt="写真${i + 1}の答え" width="1272" height="715" loading="lazy">
         <p>${item.text}</p>`;
       aWrap.append(el);
     });

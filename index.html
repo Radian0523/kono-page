@@ -91,10 +91,6 @@
   .score .big small { font-size: 22px; font-weight: 700; }
   .score .msg { margin: 8px 0 24px; }
   .x-share { display: inline-flex; align-items: center; gap: 8px; background: #000; border-color: #000; color: #fff; }
-  .comment { display: block; max-width: 420px; margin: 0 auto 16px; text-align: left; }
-  .comment span { display: block; font-size: 13px; color: var(--sub); margin-bottom: 4px; }
-  .comment input { width: 100%; font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid #ccc; border-radius: 2px; background: #fff; }
-  .comment input:focus { outline: 2px solid var(--pink); outline-offset: -1px; }
   .x-share svg { width: 16px; height: 16px; fill: currentColor; }
 
   .ans { padding: 24px 0; border-top: 1px solid var(--line); }
@@ -147,7 +143,6 @@
       <div class="score">
         <div class="big" data-score></div>
         <p class="msg" data-msg></p>
-        <label class="comment"><span>ひとこと感想（なくてもOK）</span><input type="text" data-comment maxlength="40" autocomplete="off"></label>
         <a class="btn x-share" data-share target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
           <span data-share-label>結果をポストする</span>
@@ -216,7 +211,6 @@
 
   // 1周分（点数・答え・最後の一文）の中身を入れる。lap は下から数えて何周目か
   let score = 0;
-  let comment = "";
   function shareHref(lap) {
     const n = ITEMS.length;
     const result = score === n ? `${n}枚すべて、見抜いた。` : score === 0 ? "1枚も見抜けなかった。" : `${n}枚中${score}枚、見抜いた。`;
@@ -224,20 +218,9 @@
       ? `${score > 0 ? "……のに、" : "しかも、"}まだこのページから出られていない。（${lap}周目）`
       : "もう、このページに異変はないはず。";
     const text = ["このページの異変を見つけてください🙏", result, tail].join("\n")
-      + (comment.trim() ? "\n\n" + comment.trim() : "")
       + "\n\n#このページの異変 #GC甲子園2026\n";
     return "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(WORK_URL);
   }
-  // 感想はどの周で書いても、全部の周のポストに入る
-  document.addEventListener("input", (e) => {
-    if (!e.target.matches("[data-comment]")) return;
-    comment = e.target.value;
-    document.querySelectorAll(".lap").forEach((el) => {
-      const box = el.querySelector("[data-comment]");
-      if (box !== e.target) box.value = comment;
-      el.querySelector("[data-share]").href = shareHref(Number(el.dataset.lap));
-    });
-  });
   function lapMessage(lap) {
     if (lap === 1) return MESSAGES[score];
     return LAP_MESSAGES[lap - 2] || `このページを、${lap}回見ています。`;
@@ -247,7 +230,6 @@
     el.querySelector("[data-score]").innerHTML = `${ITEMS.length}枚中 ${score}<small>枚 正解</small>`;
     el.querySelector("[data-msg]").textContent = lapMessage(lap);
     el.querySelector("[data-share]").href = shareHref(lap);
-    el.querySelector("[data-comment]").value = comment;
     el.querySelector("[data-share-label]").textContent = lap > 1 ? `${lap}周したことをポストする` : "結果をポストする";
   }
 

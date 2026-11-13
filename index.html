@@ -145,7 +145,7 @@
         <p class="msg" data-msg></p>
         <a class="btn x-share" data-share target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-          結果をポストする
+          <span data-share-label>結果をポストする</span>
         </a>
       </div>
       <h2>答え</h2>
@@ -167,12 +167,12 @@
     { anomaly: true, text: "しばらくすると、誰も押していないのに「応援する!!」が「応援済み」になり、応援数が7から8に増えます。少しすると、その応援はそっと取り消されます。" },
   ];
   const MESSAGES = {
-    5: "すべて見抜きました。このページは、あなたのことを覚えました。",
-    4: "あと1枚。どれを見落としたか、下で確かめてください。",
-    3: "半分は見抜けています。",
-    2: "このページは、まだあなたを帰すつもりはありません。",
-    1: "ほとんど気づかれませんでした。",
-    0: "あなたが見ていたのは、本当にこのページでしたか。",
+    5: "すべて見抜きました。……このページも、ずっとあなたを見ていました。",
+    4: "あと1枚。このページは、まだ何か隠しています。",
+    3: "半分は見抜けました。残りは、まだ写ったままです。",
+    2: "見抜けたのは2枚だけ。このページは、あなたを帰しません。",
+    1: "ほとんど気づきませんでしたね。",
+    0: "異変なんて、最初からなかったのかもしれません。",
   };
 
   const answers = new Array(ITEMS.length).fill(null);
@@ -225,6 +225,7 @@
     el.querySelector("[data-score]").innerHTML = `${ITEMS.length}枚中 ${score}<small>枚 正解</small>`;
     el.querySelector("[data-msg]").textContent = lapMessage(lap);
     el.querySelector("[data-share]").href = shareHref(lap);
+    el.querySelector("[data-share-label]").textContent = lap > 1 ? `${lap}周したことをポストする` : "結果をポストする";
   }
 
   $("submit").addEventListener("click", () => {
